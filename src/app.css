@@ -1,0 +1,17 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.prose {
+    @apply leading-snug break-words;
+
+    p { @apply mt-2; }
+    a { @apply underline text-gray-500; }
+    em, i { @apply italic; }
+    pre { @apply font-mono overflow-x-scroll; }
+}
+
+.scrollbar-none {
+    scrollbar-width: none;
+    &::-webkit-scrollbar {  @apply hidden; }
+}
