@@ -73,7 +73,13 @@
 
         <div class="space-y-2 p-2">
             {#each topStories as story}
-                <div on:click={() => selectStory(story)} class="cursor-pointer active:opacity-50">
+                <div on:click={() => {
+                    if(selectedItems.includes(story)) {
+                        window.open(story.url);
+                    } else {
+                        selectStory(story);
+                    }
+                }} class="cursor-pointer active:opacity-50">
                     <StoryItem {story} selected={selectedItems.includes(story)}/>
                 </div>
             {:else}

@@ -9,13 +9,9 @@
 <div>
     <h2 title={story.title} class="truncate {selected && 'font-bold text-blue-500'}">{story.title}</h2>
 
-    <div class="text-xs text-gray-500">
+    <div class="text-xs text-gray-500 flex gap-2.5">
         <span>{story.score} points</span>
-        <span>|</span>
         <span>{ago(new Date(story.time * 1000))}</span>
-        <span>|</span>
         <span>{story.descendants} comments</span>
-        <span>|</span>
-        <a href={story.url}>visit</a>
     </div>
 </div>
