@@ -25,7 +25,7 @@
         loading = false;
 
         commentColumns = [...commentColumns, comments];
-
+        
         setTimeout(() => {
             commentsContainer.scrollTo({
                 left: commentsContainer.scrollWidth,
@@ -52,8 +52,8 @@
         selectedItems = selectedItems.slice(0, columnIndex + 1);
         selectedItems = [...selectedItems, item];
 
-        const comments = await fetchComments(item);
         commentColumns = commentColumns.slice(0, columnIndex + 1);
+        const comments = await fetchComments(item);
         commentColumns = [...commentColumns, comments];
 
         setTimeout(() => {
