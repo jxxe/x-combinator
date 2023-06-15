@@ -79,7 +79,7 @@
                     } else {
                         selectStory(story);
                     }
-                }} class="cursor-pointer active:opacity-50">
+                }} class="cursor-pointer active:opacity-50 sm:active:!opacity-100">
                     <StoryItem {story} selected={selectedItems.includes(story)}/>
                 </div>
             {:else}
@@ -94,7 +94,7 @@
                 {#each comments as comment, commentIndex}
                     <div
                         on:click={() => selectComment(columnIndex, commentIndex)}
-                        class="p-4 border-r-2 {selectedItems.includes(comment) ? '!border-r-blue-500' : '!border-r-transparent'} {comment.kids && 'cursor-pointer active:opacity-50'}"
+                        class="p-4 border-r-2 {selectedItems.includes(comment) ? '!border-r-blue-500' : '!border-r-transparent'} {comment.kids && 'cursor-pointer active:opacity-50 sm:active:!opacity-100'}"
                     >
                         <CommentItem {comment}/>
                     </div>
