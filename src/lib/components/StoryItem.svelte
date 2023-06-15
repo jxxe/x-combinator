@@ -11,9 +11,11 @@
 
     <div class="text-xs text-gray-500">
         <span>{story.score} points</span>
-        <span>by {story.by}</span>
+        <span>|</span>
         <span>{ago(new Date(story.time * 1000))}</span>
         <span>|</span>
         <span>{story.descendants} comments</span>
+        <span>|</span>
+        <a href={story.url}>visit</a>
     </div>
 </div>
