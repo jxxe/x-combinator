@@ -4,5 +4,7 @@
         <p class="font-bold">Horizontal News</p>
     </a>
 
-    <a class="hover:underline" href="https://jero.zone" target="_blank">jero.zone</a>
+    <p>
+        by <a class="hover:underline" href="https://jero.zone" target="_blank">Jerome</a>
+    </p>
 </div>
