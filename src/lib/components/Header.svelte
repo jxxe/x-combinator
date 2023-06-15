@@ -4,5 +4,5 @@
         <p class="font-bold">Horizontal News</p>
     </a>
 
-    <a class="hover:underline" href="https://github.com/jxxe/x-combinator" target="_blank">GitHub</a>
+    <a class="hover:underline" href="https://jero.zone" target="_blank">jero.zone</a>
 </div>
