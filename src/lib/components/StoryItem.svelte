@@ -7,7 +7,7 @@
 </script>
 
 <div>
-    <h2 title={story.title} class="truncate {selected && 'font-bold text-blue-500'}">{story.title}</h2>
+    <h2 title={story.title} class={selected ? 'text-blue-500' : ''}>{story.title}</h2>
 
     <div class="text-xs text-gray-500 flex gap-2.5">
         <span>{story.score} points</span>
