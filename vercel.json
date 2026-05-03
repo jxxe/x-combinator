@@ -1,3 +1,4 @@
 {
-  "outputDirectory": "build"
+  "outputDirectory": "build",
+  "rewrites": [{ "source": "/(.*)", "destination": "/200.html" }]
 }
