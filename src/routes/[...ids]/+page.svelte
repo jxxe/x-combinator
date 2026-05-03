@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { fetchComments, fetchTopStories } from '$lib/api';
+    import { fetchComment, fetchComments, fetchStory, fetchTopStories } from '$lib/api';
     import Column from '$lib/components/Column.svelte';
     import CommentItem from '$lib/components/CommentItem.svelte';
     import Header from '$lib/components/Header.svelte';
@@ -7,18 +7,71 @@
     import type { Comment, Item, Story } from '$lib/types/item';
     import { onMount } from 'svelte';
 
+    export let data: { ids: number[] };
+
     let topStories: Story[] = [];
     let commentColumns: Comment[][] = [];
     let selectedItems: Item[] = [];
-
     let loading = false;
-
     let commentsContainer: HTMLElement;
 
-    onMount(async () => topStories = await fetchTopStories(30));
+    function updateURL() {
+        const path = selectedItems.length
+            ? '/' + selectedItems.map(i => i.id).join('/')
+            : '/';
+        history.replaceState(null, '', path);
+    }
+
+    async function restoreFromIds(ids: number[]) {
+        if (ids.length === 0) return;
+
+        // Round 1: fetch story and all selected comments in parallel
+        const [story, ...pathComments] = await Promise.all([
+            fetchStory(ids[0]),
+            ...ids.slice(1).map(id => fetchComment(id))
+        ]);
+
+        if (!story) return;
+
+        // Round 2: fetch all comment columns in parallel
+        const allItems = [story, ...pathComments];
+        const columns = await Promise.all(
+            allItems.map(item => item?.kids ? fetchComments(item) : Promise.resolve([]))
+        );
+
+        // Build state, stopping at the first ID not found in its parent's column
+        selectedItems = [story];
+        commentColumns = [columns[0]];
+
+        for (let i = 0; i < pathComments.length; i++) {
+            const commentInColumn = columns[i].find(c => c.id === ids[i + 1]);
+            if (!commentInColumn) break;
+            selectedItems = [...selectedItems, commentInColumn];
+            commentColumns = [...commentColumns, columns[i + 1]];
+        }
+    }
+
+    onMount(async () => {
+        loading = true;
+        const storiesPromise = fetchTopStories(30);
+        const restorePromise = restoreFromIds(data.ids);
+        topStories = await storiesPromise;
+        await restorePromise;
+        loading = false;
+
+        if (commentColumns.length > 0) {
+            setTimeout(() => {
+                commentsContainer.scrollTo({
+                    left: commentsContainer.scrollWidth,
+                    top: 0,
+                    behavior: 'smooth'
+                });
+            });
+        }
+    });
 
     async function loadComments(item: Item) {
-        if(!item.kids) return;
+        if (!item.kids) return;
 
         loading = true;
         const comments = await fetchComments(item);
@@ -36,25 +89,25 @@
     }
 
     async function selectStory(story: Story) {
-        if(loading) return;
+        if (loading) return;
 
         selectedItems = [story];
         commentColumns = [];
+        updateURL();
         await loadComments(story);
     }
 
     async function selectComment(columnIndex: number, commentIndex: number) {
-        if(loading) return;
+        if (loading) return;
 
         const item = commentColumns[columnIndex][commentIndex];
-        if(!item.kids) return;
+        if (!item.kids) return;
 
-        selectedItems = selectedItems.slice(0, columnIndex + 1);
-        selectedItems = [...selectedItems, item];
+        selectedItems = [...selectedItems.slice(0, columnIndex + 1), item];
+        updateURL();
 
         const comments = await fetchComments(item);
-        commentColumns = commentColumns.slice(0, columnIndex + 1);
-        commentColumns = [...commentColumns, comments];
+        commentColumns = [...commentColumns.slice(0, columnIndex + 1), comments];
 
         setTimeout(() => {
             commentsContainer.scrollTo({
