@@ -133,7 +133,7 @@
                         selectStory(story);
                     }
                 }} class="cursor-pointer active:opacity-50 sm:active:!opacity-100">
-                    <StoryItem {story} selected={selectedItems.includes(story)}/>
+                    <StoryItem {story} selected={selectedItems[0]?.id === story.id}/>
                 </div>
             {:else}
                 <p class="italic text-gray-500">Loading top stories...</p>
@@ -141,13 +141,26 @@
         </div>
     </Column>
 
+    {#if selectedItems[0]?.type === 'story' && selectedItems[0].url}
+        <Column index={-1}>
+            {#key selectedItems[0].url}
+                <iframe
+                    src={`/embed-proxy?url=${encodeURIComponent(selectedItems[0].url)}`}
+                    frameborder="0"
+                    title={selectedItems[0].title}
+                    class="w-full h-full [zoom:80%]"
+                ></iframe>
+            {/key}
+        </Column>
+    {/if}
+
     {#each commentColumns as comments, columnIndex}
         <Column index={columnIndex + 1}>
             <div class="divide-y divide-gray-300">
                 {#each comments as comment, commentIndex}
                     <div
                         on:click={() => selectComment(columnIndex, commentIndex)}
-                        class="p-4 border-r-2 {selectedItems.includes(comment) ? '!border-r-blue-500' : '!border-r-transparent'} {comment.kids && 'cursor-pointer active:opacity-50 sm:active:!opacity-100'}"
+                        class="p-4 border-r-2 {selectedItems.some(item => item.id === comment.id) ? '!border-r-blue-500' : '!border-r-transparent'} {comment.kids && 'cursor-pointer active:opacity-50 sm:active:!opacity-100'}"
                     >
                         <CommentItem {comment}/>
                     </div>

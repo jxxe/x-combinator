@@ -1,13 +1,15 @@
-export interface Item {
-    by: string;
-    id: number;
-    kids?: number[];
-    time: number;
-    type: string;
-    deleted?: true;
+export type Item = Story | Comment;
+
+type CommonFields = {
+    by: string,
+    id: number,
+    kids?: number[],
+    time: number,
+    type: string,
+    deleted?: true
 }
 
-export interface Story extends Item {
+export type Story = CommonFields & {
     descendants: number;
     score: number;
     title: string;
@@ -16,7 +18,7 @@ export interface Story extends Item {
     text?: string;
 }
 
-export interface Comment extends Item {
+export type Comment = CommonFields & {
     parent: number;
     text: string;
     type: 'comment';
