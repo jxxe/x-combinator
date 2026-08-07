@@ -15,6 +15,10 @@
     let loading = false;
     let commentsContainer: HTMLElement;
 
+    $: embedUrl = selectedItems[0].type === 'story'
+        ? selectedItems[0].url
+        : undefined
+
     function updateURL() {
         const path = selectedItems.length
             ? '/' + selectedItems.map(i => i.id).join('/')
@@ -141,13 +145,13 @@
         </div>
     </Column>
 
-    {#if selectedItems[0]?.type === 'story' && selectedItems[0].url}
-        <Column index={-1}>
-            {#key selectedItems[0].url}
+    {#if embedUrl}
+        <Column index={1}>
+            {#key embedUrl}
                 <iframe
-                    src={`/embed-proxy?url=${encodeURIComponent(selectedItems[0].url)}`}
+                    src={`/embed-proxy?url=${encodeURIComponent(embedUrl)}`}
                     frameborder="0"
-                    title={selectedItems[0].title}
+                    title="Embedded article"
                     class="w-full h-full [zoom:80%]"
                 ></iframe>
             {/key}
@@ -155,7 +159,7 @@
     {/if}
 
     {#each commentColumns as comments, columnIndex}
-        <Column index={columnIndex + 1}>
+        <Column index={columnIndex + (embedUrl ? 2 : 1)}>
             <div class="divide-y divide-gray-300">
                 {#each comments as comment, commentIndex}
                     <div
