@@ -9,6 +9,8 @@ export async function GET({ url }) {
 
     try {
         const response = await fetch(proxyUrl);
+        if (!response.ok) throw new Error();
+
         const body = `<base href="${proxyUrl.origin}"> ${await response.text()}`;
 
         return new Response(body, {
