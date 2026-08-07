@@ -15,7 +15,7 @@
     let loading = false;
     let commentsContainer: HTMLElement;
 
-    $: embedUrl = selectedItems[0].type === 'story'
+    $: embedUrl = selectedItems[0]?.type === 'story'
         ? selectedItems[0].url
         : undefined
 
