@@ -159,6 +159,7 @@
                     frameborder="0"
                     title="Embedded article"
                     class="w-full h-full [zoom:80%]"
+                    sandbox=""
                 ></iframe>
             {/key}
         </Column>
