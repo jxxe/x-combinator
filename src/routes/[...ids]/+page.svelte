@@ -123,6 +123,12 @@
     }
 </script>
 
+<svelte:head>
+    <title>
+        {selectedItems[0]?.type === 'story' ? selectedItems[0].title : 'Horizontal News'}
+    </title>
+</svelte:head>
+
 <!-- svelte-ignore a11y-click-events-have-key-events -->
 <div class="flex h-[100dvh] overflow-y-hidden scrollbar-none" bind:this={commentsContainer}>
     <Column index={0}>
@@ -131,7 +137,7 @@
         <div class="space-y-2 p-2">
             {#each topStories as story}
                 <div on:click={() => {
-                    if(selectedItems.includes(story)) {
+                    if(selectedItems[0]?.id === story.id) {
                         window.open(story.url);
                     } else {
                         selectStory(story);
