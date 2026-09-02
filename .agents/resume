@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# This project has no services or authentication to restore after an orb wakes.
+node --version >/dev/null
+npm --version >/dev/null

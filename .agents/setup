@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+step() {
+	printf '\n==> %s\n' "$1"
+}
+
+step "Checking the Node.js toolchain"
+node --version
+npm --version
+
+step "Installing dependencies from package-lock.json"
+time npm ci --no-audit --no-fund
+
+step "Generating SvelteKit types"
+time npm exec -- svelte-kit sync
