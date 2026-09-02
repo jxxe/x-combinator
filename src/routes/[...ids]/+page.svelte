@@ -158,7 +158,7 @@
                     src={`/embed-proxy?url=${encodeURIComponent(embedUrl)}`}
                     frameborder="0"
                     title="Embedded article"
-                    class="w-full h-full [zoom:80%]"
+                    class="w-full h-full [zoom:90%]"
                     sandbox=""
                 ></iframe>
             {/key}
