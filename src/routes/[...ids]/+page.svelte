@@ -17,9 +17,16 @@
     let hasMoreStories = true;
     let nextStoryDay = new Date();
     let commentsContainer: HTMLElement;
+    let selectedStoryPosition: 'top' | 'bottom' | undefined;
 
     nextStoryDay.setUTCHours(0, 0, 0, 0);
 
+    $: selectedStory = selectedItems[0]?.type === 'story'
+        ? selectedItems[0]
+        : undefined;
+    $: selectedStoryIsLoaded = selectedStory
+        ? storyGroups.some(group => group.stories.some(story => story.id === selectedStory?.id))
+        : false;
     $: embedUrl = selectedItems[0]?.type === 'story'
         ? selectedItems[0].url
         : undefined
@@ -134,6 +141,54 @@
         await loadComments(story);
     }
 
+    function openOrSelectStory(story: Story) {
+        if (selectedStory?.id === story.id) {
+            window.open(story.url);
+        } else {
+            selectStory(story);
+        }
+    }
+
+    function trackStickyStory(marker: HTMLElement) {
+        const column = marker.parentElement?.parentElement;
+        let frame: number;
+
+        function update() {
+            const story = marker.nextElementSibling as HTMLElement | null;
+            if (!column || !story) return;
+
+            const columnRect = column.getBoundingClientRect();
+            const normalTop = marker.getBoundingClientRect().top
+                + parseFloat(getComputedStyle(story).marginTop);
+
+            if (normalTop < columnRect.top + 28) {
+                selectedStoryPosition = 'top';
+            } else if (normalTop + story.offsetHeight > columnRect.bottom) {
+                selectedStoryPosition = 'bottom';
+            } else {
+                selectedStoryPosition = undefined;
+            }
+        }
+
+        function scheduleUpdate() {
+            cancelAnimationFrame(frame);
+            frame = requestAnimationFrame(update);
+        }
+
+        column?.addEventListener('scroll', scheduleUpdate, { passive: true });
+        window.addEventListener('resize', scheduleUpdate);
+        scheduleUpdate();
+
+        return {
+            destroy() {
+                cancelAnimationFrame(frame);
+                column?.removeEventListener('scroll', scheduleUpdate);
+                window.removeEventListener('resize', scheduleUpdate);
+                selectedStoryPosition = undefined;
+            }
+        };
+    }
+
     async function selectComment(columnIndex: number, commentIndex: number) {
         if (loading) return;
 
@@ -167,30 +222,48 @@
     <Column index={0} on:scroll={handleStoriesScroll}>
         <Header/>
 
-        <div class="space-y-2 p-2">
+        <div class="pt-2">
+            {#if selectedStory && storyGroups.length > 0 && !selectedStoryIsLoaded}
+                <div class="h-0" use:trackStickyStory></div>
+                <div
+                    on:click={() => selectedStory && openOrSelectStory(selectedStory)}
+                    class="sticky top-7 bottom-0 z-10 -mt-2 mb-2 cursor-pointer border-b border-gray-300 bg-blue-50 p-2 active:opacity-50 sm:active:!opacity-100"
+                >
+                    <StoryItem story={selectedStory} selected/>
+                </div>
+            {/if}
+
             {#each storyGroups as group, groupIndex}
                 {#if groupIndex > 0}
-                    <div class="flex items-center gap-2 pt-4 text-xs font-medium text-gray-500">
+                    <div class="flex items-center gap-2 px-2 pt-4 pb-2 text-xs font-medium text-gray-500">
                         <time datetime={group.day}>{formatDay(group.day)}</time>
                         <div class="h-px grow bg-gray-300"></div>
                     </div>
                 {/if}
 
                 {#each group.stories as story}
-                    <div on:click={() => {
-                        if(selectedItems[0]?.id === story.id) {
-                            window.open(story.url);
-                        } else {
-                            selectStory(story);
-                        }
-                    }} class="cursor-pointer active:opacity-50 sm:active:!opacity-100">
+                    {#if selectedStory?.id === story.id}
+                        <div class="h-0" use:trackStickyStory></div>
+                    {/if}
+                    <div
+                        on:click={() => openOrSelectStory(story)}
+                        class:sticky={selectedStory?.id === story.id}
+                        class:top-7={selectedStory?.id === story.id}
+                        class:bottom-0={selectedStory?.id === story.id}
+                        class:z-10={selectedStory?.id === story.id}
+                        class:bg-blue-50={selectedStory?.id === story.id}
+                        class:border-t={selectedStory?.id === story.id && selectedStoryPosition === 'bottom'}
+                        class:border-b={selectedStory?.id === story.id && selectedStoryPosition === 'top'}
+                        class:border-gray-300={selectedStory?.id === story.id && !!selectedStoryPosition}
+                        class="cursor-pointer px-2 pb-2 active:opacity-50 sm:active:!opacity-100 {selectedStory?.id === story.id ? 'pt-2 -mt-2' : ''}"
+                    >
                         <StoryItem {story} selected={selectedItems[0]?.id === story.id}/>
                     </div>
                 {/each}
             {/each}
 
             {#if loadingStories}
-                <p class="py-4 italic text-gray-500">Loading...</p>
+                <p class="px-2 py-4 italic text-gray-500">Loading...</p>
             {/if}
         </div>
     </Column>
