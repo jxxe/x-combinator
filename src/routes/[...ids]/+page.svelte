@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { fetchComment, fetchComments, fetchStory, fetchTopStories } from '$lib/api';
+    import { fetchComment, fetchComments, fetchFrontPage, fetchStory } from '$lib/api';
     import Column from '$lib/components/Column.svelte';
     import CommentItem from '$lib/components/CommentItem.svelte';
     import Header from '$lib/components/Header.svelte';
@@ -9,11 +9,16 @@
 
     export let data: { ids: number[] };
 
-    let topStories: Story[] = [];
+    let storyGroups: { day: string, stories: Story[] }[] = [];
     let commentColumns: Comment[][] = [];
     let selectedItems: Item[] = [];
     let loading = false;
+    let loadingStories = false;
+    let hasMoreStories = true;
+    let nextStoryDay = new Date();
     let commentsContainer: HTMLElement;
+
+    nextStoryDay.setUTCHours(0, 0, 0, 0);
 
     $: embedUrl = selectedItems[0]?.type === 'story'
         ? selectedItems[0].url
@@ -55,12 +60,40 @@
         }
     }
 
+    async function loadMoreStories() {
+        if (loadingStories || !hasMoreStories) return;
+
+        loadingStories = true;
+        try {
+            const day = nextStoryDay.toISOString().slice(0, 10);
+            const stories = await fetchFrontPage(day);
+            storyGroups = [...storyGroups, { day, stories }];
+            hasMoreStories = stories.length > 0;
+            nextStoryDay.setUTCDate(nextStoryDay.getUTCDate() - 1);
+        } finally {
+            loadingStories = false;
+        }
+    }
+
+    function formatDay(day: string) {
+        return new Intl.DateTimeFormat(undefined, {
+            dateStyle: 'long',
+            timeZone: 'UTC'
+        }).format(new Date(`${day}T00:00:00Z`));
+    }
+
+    function handleStoriesScroll(event: Event) {
+        const column = event.currentTarget as HTMLElement;
+        const distanceFromBottom = column.scrollHeight - column.scrollTop - column.clientHeight;
+
+        if (distanceFromBottom < 400) loadMoreStories();
+    }
+
     onMount(async () => {
         loading = true;
-        const storiesPromise = fetchTopStories(30);
+        const storiesPromise = loadMoreStories();
         const restorePromise = restoreFromIds(data.ids);
-        topStories = await storiesPromise;
-        await restorePromise;
+        await Promise.all([storiesPromise, restorePromise]);
         loading = false;
 
         if (commentColumns.length > 0) {
@@ -131,23 +164,34 @@
 
 <!-- svelte-ignore a11y-click-events-have-key-events -->
 <div class="flex h-[100dvh] overflow-y-hidden scrollbar-none" bind:this={commentsContainer}>
-    <Column index={0}>
+    <Column index={0} on:scroll={handleStoriesScroll}>
         <Header/>
 
         <div class="space-y-2 p-2">
-            {#each topStories as story}
-                <div on:click={() => {
-                    if(selectedItems[0]?.id === story.id) {
-                        window.open(story.url);
-                    } else {
-                        selectStory(story);
-                    }
-                }} class="cursor-pointer active:opacity-50 sm:active:!opacity-100">
-                    <StoryItem {story} selected={selectedItems[0]?.id === story.id}/>
-                </div>
-            {:else}
-                <p class="italic text-gray-500">Loading top stories...</p>
+            {#each storyGroups as group, groupIndex}
+                {#if groupIndex > 0}
+                    <div class="flex items-center gap-2 pt-4 text-xs font-medium text-gray-500">
+                        <time datetime={group.day}>{formatDay(group.day)}</time>
+                        <div class="h-px grow bg-gray-300"></div>
+                    </div>
+                {/if}
+
+                {#each group.stories as story}
+                    <div on:click={() => {
+                        if(selectedItems[0]?.id === story.id) {
+                            window.open(story.url);
+                        } else {
+                            selectStory(story);
+                        }
+                    }} class="cursor-pointer active:opacity-50 sm:active:!opacity-100">
+                        <StoryItem {story} selected={selectedItems[0]?.id === story.id}/>
+                    </div>
+                {/each}
             {/each}
+
+            {#if loadingStories}
+                <p class="py-4 italic text-gray-500">Loading...</p>
+            {/if}
         </div>
     </Column>
 

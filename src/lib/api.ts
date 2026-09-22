@@ -15,11 +15,10 @@ export async function fetchComment(commentId: number) {
     return await GET<Comment>(`item/${commentId}.json`);
 }
 
-export async function fetchTopStories(limit?: number) {
-    let storyIds = await GET<number[]>('topstories.json');
-    if(limit) storyIds = storyIds.slice(0, limit);
-    const promises = storyIds.map(fetchStory);
-    return await Promise.all(promises);
+export async function fetchFrontPage(day: string) {
+    const request = await fetch(`/front-page?day=${day}`);
+    if (!request.ok) throw new Error('Unable to load stories');
+    return await request.json() as Story[];
 }
 
 export async function fetchComments(item: Item) {
