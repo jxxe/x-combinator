@@ -44,6 +44,11 @@
 
     function selectStory(event: MouseEvent, story: Story) {
         if (!shouldSelectOptimistically(event)) return;
+        if (selectedStory?.id === story.id && story.url) {
+            event.preventDefault();
+            window.open(story.url, '_blank', 'noopener');
+            return;
+        }
         if (selectedItems.length === 1 && selectedItems[0].id === story.id) return;
         ++restoreId;
         selectedItems = [story];
