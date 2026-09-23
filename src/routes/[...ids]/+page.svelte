@@ -45,15 +45,28 @@
     function selectStory(event: MouseEvent, story: Story) {
         if (!shouldSelectOptimistically(event)) return;
         if (selectedItems.length === 1 && selectedItems[0].id === story.id) return;
+        ++restoreId;
         selectedItems = [story];
         commentColumns = [];
     }
 
-    function selectComment(event: MouseEvent, columnIndex: number, comment: Comment) {
-        if (!shouldSelectOptimistically(event)) return;
-        if (selectedItems.length === columnIndex + 2 && selectedItems.at(-1)?.id === comment.id) return;
+    function selectCommentFromClick(event: MouseEvent, columnIndex: number, comment: Comment) {
+        if (!(event.target as HTMLElement).closest('a')) selectComment(columnIndex, comment);
+    }
+
+    async function selectComment(columnIndex: number, comment: Comment) {
+        if (!comment.kids) return;
+        const currentRestoreId = ++restoreId;
         selectedItems = [...selectedItems.slice(0, columnIndex + 1), comment];
         commentColumns = commentColumns.slice(0, columnIndex + 1);
+        history.replaceState({ ...history.state }, '', '/' + selectedItems.map(item => item.id).join('/'));
+
+        const comments = await fetchComments(comment);
+        if (currentRestoreId !== restoreId) return;
+        commentColumns = [...commentColumns, comments];
+
+        await tick();
+        commentsContainer?.scrollTo({ left: commentsContainer.scrollWidth, top: 0, behavior: 'smooth' });
     }
 
     async function restoreFromIds(ids: number[]) {
@@ -254,14 +267,21 @@
         <Column index={columnIndex + (embedUrl ? 2 : 1)}>
             <div class="divide-y divide-gray-300">
                 {#each comments as comment}
-                    <a
-                        href={'/' + [...selectedItems.slice(0, columnIndex + 1), comment].map(item => item.id).join('/')}
-                        on:click={(event) => selectComment(event, columnIndex, comment)}
-                        aria-current={selectedItems.some(item => item.id === comment.id) ? 'page' : undefined}
-                        class="block p-4 border-r-2 active:opacity-50 sm:active:!opacity-100 {selectedItems.some(item => item.id === comment.id) ? '!border-r-blue-500' : '!border-r-transparent'}"
+                    <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
+                    <div
+                        role={comment.kids ? 'button' : undefined}
+                        tabindex={comment.kids ? 0 : undefined}
+                        on:click={(event) => selectCommentFromClick(event, columnIndex, comment)}
+                        on:keydown={(event) => {
+                            if (event.target === event.currentTarget && (event.key === 'Enter' || event.key === ' ')) {
+                                event.preventDefault();
+                                selectComment(columnIndex, comment);
+                            }
+                        }}
+                        class="p-4 border-r-2 {selectedItems.some(item => item.id === comment.id) ? '!border-r-blue-500' : '!border-r-transparent'} {comment.kids && 'cursor-pointer active:opacity-50 sm:active:!opacity-100'}"
                     >
                         <CommentItem {comment}/>
-                    </a>
+                    </div>
                 {/each}
             </div>
         </Column>
