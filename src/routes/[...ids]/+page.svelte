@@ -109,7 +109,7 @@
     {#if story}
         <Column index={1}>
             <div class="flex flex-col h-full">
-                <div class="p-4 space-y-1 border-b border-gray-300">
+                <div class="px-4 py-3 space-y-1 border-b border-gray-300">
                     <h1 class="leading-snug [text-wrap:pretty]">
                         {#if story.url}
                             <!-- The non-breaking space keeps the domain on the same line as the title's last word -->
