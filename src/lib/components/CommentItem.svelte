@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { Comment } from '$lib/types/item';
-    import ago from 's-ago';
+    import { hnAge } from '$lib/time';
 
     export let comment: Comment;
 </script>
@@ -9,7 +9,7 @@
     <div class="text-xs flex justify-between">
         <div class="text-gray-500">
             <span>{comment.by}</span>
-            <span>{ago(new Date(comment.time * 1000))}</span>
+            <span>{hnAge(comment.time)}</span>
         </div>
         
         <p class:text-blue-500={comment.kids?.length}>

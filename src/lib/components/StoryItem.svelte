@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { Story } from '$lib/types/item';
-    import ago from 's-ago';
+    import { hnAge } from '$lib/time';
 
     export let story: Story;
     export let selected = false;
@@ -11,7 +11,7 @@
 
     <div class="text-xs text-gray-500 flex gap-2.5">
         <span>{story.score} points</span>
-        <span>{ago(new Date(story.time * 1000))}</span>
+        <span>{hnAge(story.time)}</span>
         <span>{story.descendants} comments</span>
     </div>
 </div>

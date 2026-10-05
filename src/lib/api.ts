@@ -2,6 +2,7 @@ import type { Comment, Item, Story } from './types/item';
 
 const API_BASE_URL = 'https://hacker-news.firebaseio.com/v0/';
 const itemRequests = new Map<number, Promise<Item>>();
+const commentRequests = new Map<number, Promise<Comment[]>>();
 
 async function GET<T>(path: string): Promise<T> {
     const request = await fetch(API_BASE_URL + path);
@@ -31,11 +32,23 @@ export async function fetchComment(commentId: number) {
 export async function fetchFrontPage(day: string) {
     const request = await fetch(`/front-page?day=${day}`);
     if (!request.ok) throw new Error('Unable to load stories');
-    return await request.json() as Story[];
+    const stories = await request.json() as Story[];
+    for (const story of stories) {
+        if (!itemRequests.has(story.id)) itemRequests.set(story.id, Promise.resolve(story));
+    }
+    return stories;
 }
 
-export async function fetchComments(item: Item) {
-    const promises = item.kids!.map(fetchComment);
-    const comments = await Promise.all(promises);
-    return comments.filter(c => !c.deleted);
+export function fetchComments(item: Item) {
+    let request = commentRequests.get(item.id);
+    if (!request) {
+        request = Promise.all((item.kids ?? []).map(fetchComment))
+            .then(comments => comments.filter(c => !c.deleted))
+            .catch(error => {
+                commentRequests.delete(item.id);
+                throw error;
+            });
+        commentRequests.set(item.id, request);
+    }
+    return request;
 }
