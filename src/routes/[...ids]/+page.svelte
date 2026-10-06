@@ -93,7 +93,7 @@
                     <a
                         href={story?.id === groupStory.id ? '/' : `/${groupStory.id}`}
                         aria-current={story?.id === groupStory.id ? 'page' : undefined}
-                        class="block active:opacity-50 sm:active:!opacity-100"
+                        class="cursor-e-resize block active:opacity-50 sm:active:!opacity-100"
                     >
                         <StoryItem story={groupStory} selected={story?.id === groupStory.id}/>
                     </a>
@@ -168,7 +168,7 @@
                                     selectComment(column.path, comment.id);
                                 }
                             }}
-                            class="p-4 border-r-2 {data.selectedIds.includes(comment.id) ? '!border-r-blue-500' : '!border-r-transparent'} {comment.kids && 'cursor-pointer active:opacity-50 sm:active:!opacity-100'}"
+                            class="p-4 border-r-2 {data.selectedIds.includes(comment.id) ? '!border-r-blue-500' : '!border-r-transparent'} {comment.kids && 'cursor-e-resize active:opacity-50 sm:active:!opacity-100'}"
                         >
                             <CommentItem {comment}/>
                         </div>
