@@ -9,6 +9,7 @@
     import type { Story } from '$lib/types/item';
     import { onMount } from 'svelte';
     import { hnAge } from '$lib/time';
+    import { horizontalNewsUrl, rewriteHnLinks } from '$lib/hn-links';
     import type { PageData } from './$types';
 
     export let data: PageData;
@@ -114,7 +115,7 @@
                         {#if story.url}
                             {@const domain = new URL(story.url).hostname.replace(/^www\./, '')}
                             <!-- The non-breaking space keeps the domain on the same line as the title's last word -->
-                            <a href={story.url} target="_blank" rel="noopener" class="hover:underline">{story.title}</a>&nbsp;<a href={`https://news.ycombinator.com/from?site=${domain}`} target="_blank" rel="noopener" class="text-xs text-gray-500 hover:underline">({domain})</a>
+                            <a href={horizontalNewsUrl(story.url)} target="_blank" rel="noopener" class="hover:underline">{story.title}</a>&nbsp;<a href={`https://news.ycombinator.com/from?site=${domain}`} target="_blank" rel="noopener" class="text-xs text-gray-500 hover:underline">({domain})</a>
                         {:else}
                             {story.title}
                         {/if}
@@ -125,7 +126,7 @@
                         {#if storyTime}
                             <time datetime={storyTime.toISOString()} title={storyTime.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}>{hnAge(story.time)}</time>
                         {/if}
-                        | <a href={`https://news.ycombinator.com/item?id=${story.id}`} target="_blank" rel="noopener" class="hover:underline">{story.descendants ?? 0} {story.descendants === 1 ? 'comment' : 'comments'}</a>
+                        | <a href={`/${story.id}`} target="_blank" rel="noopener" class="hover:underline">{story.descendants ?? 0} {story.descendants === 1 ? 'comment' : 'comments'}</a>
                     </p>
                 </div>
 
@@ -140,7 +141,7 @@
                         ></iframe>
                     {/key}
                 {:else if story.text}
-                    <div class="prose p-4">{@html story.text}</div>
+                    <div class="prose p-4" use:rewriteHnLinks={story.text}>{@html story.text}</div>
                 {/if}
             </div>
         </Column>

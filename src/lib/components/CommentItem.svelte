@@ -1,6 +1,7 @@
 <script lang="ts">
     import type { Comment } from '$lib/types/item';
     import { hnAge } from '$lib/time';
+    import { rewriteHnLinks } from '$lib/hn-links';
 
     export let comment: Comment;
 </script>
@@ -17,5 +18,5 @@
         </p>
     </div>
 
-    <p class="prose">{@html comment.text}</p>
+    <p class="prose" use:rewriteHnLinks={comment.text}>{@html comment.text}</p>
 </div>

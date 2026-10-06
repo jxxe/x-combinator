@@ -11,7 +11,7 @@ async function GET<T>(path: string): Promise<T> {
     return await request.json();
 }
 
-function fetchItem<T extends Item>(itemId: number) {
+export function fetchItem<T extends Item>(itemId: number) {
     let request = itemRequests.get(itemId);
     if (!request) {
         request = GET<Item>(`item/${itemId}.json`).catch(error => {
@@ -21,10 +21,6 @@ function fetchItem<T extends Item>(itemId: number) {
         if (browser) itemRequests.set(itemId, request);
     }
     return request as Promise<T>;
-}
-
-export async function fetchStory(storyId: number) {
-    return await fetchItem<Story>(storyId);
 }
 
 export async function fetchComment(commentId: number) {

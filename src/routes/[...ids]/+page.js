@@ -1,4 +1,5 @@
-import { fetchComment, fetchComments, fetchStory } from '$lib/api';
+import { fetchComment, fetchComments, fetchItem } from '$lib/api';
+import { redirect } from '@sveltejs/kit';
 
 export const prerender = false;
 
@@ -9,10 +10,21 @@ export async function load({ params }) {
         : [];
 
     const [story, ...comments] = ids.length
-        ? await Promise.all([fetchStory(ids[0]), ...ids.slice(1).map(fetchComment)])
+        ? await Promise.all([fetchItem(ids[0]), ...ids.slice(1).map(fetchComment)])
         : [];
 
-    if (!story) return { story: undefined, selectedIds: /** @type {number[]} */ ([]), columns: [] };
+    // HN item links can point directly to a comment. Resolve its full column path.
+    if (story?.type === 'comment') {
+        const path = [story.id];
+        let item = story;
+        while (item?.type === 'comment') {
+            item = await fetchItem(item.parent);
+            if (item) path.unshift(item.id);
+        }
+        if (item?.type === 'story') throw redirect(307, '/' + path.join('/'));
+    }
+
+    if (story?.type !== 'story') return { story: undefined, selectedIds: /** @type {number[]} */ ([]), columns: [] };
 
     // Keep the longest valid parent-to-child chain from the URL
     /** @type {import('$lib/types/item').Item[]} */
