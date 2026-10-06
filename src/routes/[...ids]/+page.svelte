@@ -1,5 +1,6 @@
 <script lang="ts">
     import { afterNavigate, goto } from '$app/navigation';
+    import { page } from '$app/stores';
     import { fetchFrontPage } from '$lib/api';
     import Column from '$lib/components/Column.svelte';
     import CommentItem from '$lib/components/CommentItem.svelte';
@@ -22,6 +23,8 @@
 
     $: story = data.story;
     $: storyTime = story && new Date(story.time * 1000);
+    $: title = story?.title ?? 'Horizontal News';
+    $: previewUrl = new URL($page.url.pathname, $page.url.origin).href;
 
     function openSelectedStory(event: MouseEvent, clicked: Story) {
         if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
@@ -72,7 +75,13 @@
 </script>
 
 <svelte:head>
-    <title>{story?.title ?? 'Horizontal News'}</title>
+    <title>{title}</title>
+    <meta property="og:site_name" content="Horizontal News">
+    <meta property="og:type" content={story ? 'article' : 'website'}>
+    <meta property="og:title" content={title}>
+    <meta property="og:url" content={previewUrl}>
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content={title}>
 </svelte:head>
 
 <div class="flex h-[100dvh] overflow-y-hidden scrollbar-none" bind:this={commentsContainer}>

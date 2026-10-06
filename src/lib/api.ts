@@ -1,6 +1,8 @@
+import { browser } from '$app/environment';
 import type { Comment, Item, Story } from './types/item';
 
 const API_BASE_URL = 'https://hacker-news.firebaseio.com/v0/';
+// Keep these session caches in the browser, not across server-rendered requests.
 const itemRequests = new Map<number, Promise<Item>>();
 const commentRequests = new Map<number, Promise<Comment[]>>();
 
@@ -16,7 +18,7 @@ function fetchItem<T extends Item>(itemId: number) {
             itemRequests.delete(itemId);
             throw error;
         });
-        itemRequests.set(itemId, request);
+        if (browser) itemRequests.set(itemId, request);
     }
     return request as Promise<T>;
 }
@@ -48,7 +50,7 @@ export function fetchComments(item: Item) {
                 commentRequests.delete(item.id);
                 throw error;
             });
-        commentRequests.set(item.id, request);
+        if (browser) commentRequests.set(item.id, request);
     }
     return request;
 }
