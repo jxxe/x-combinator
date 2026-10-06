@@ -26,14 +26,6 @@
     $: title = story?.title ?? 'Horizontal News';
     $: previewUrl = new URL($page.url.pathname, $page.url.origin).href;
 
-    function openSelectedStory(event: MouseEvent, clicked: Story) {
-        if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
-        if (story?.id === clicked.id && clicked.url) {
-            event.preventDefault();
-            window.open(clicked.url, '_blank', 'noopener');
-        }
-    }
-
     function selectComment(path: number[], commentId: number) {
         goto('/' + [...path, commentId].join('/'), { replaceState: true, noScroll: true, keepFocus: true });
     }
@@ -99,8 +91,7 @@
 
                 {#each group.stories as groupStory}
                     <a
-                        href={`/${groupStory.id}`}
-                        on:click={(event) => openSelectedStory(event, groupStory)}
+                        href={story?.id === groupStory.id ? '/' : `/${groupStory.id}`}
                         aria-current={story?.id === groupStory.id ? 'page' : undefined}
                         class="block active:opacity-50 sm:active:!opacity-100"
                     >
