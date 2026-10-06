@@ -121,8 +121,9 @@
                 <div class="px-4 py-3 space-y-1 border-b border-gray-300">
                     <h1 class="leading-snug [text-wrap:pretty]">
                         {#if story.url}
+                            {@const domain = new URL(story.url).hostname.replace(/^www\./, '')}
                             <!-- The non-breaking space keeps the domain on the same line as the title's last word -->
-                            <a href={story.url} target="_blank" rel="noopener" class="hover:underline">{story.title}</a>&nbsp;<span class="text-xs text-gray-500">({new URL(story.url).hostname.replace(/^www\./, '')})</span>
+                            <a href={story.url} target="_blank" rel="noopener" class="hover:underline">{story.title}</a>&nbsp;<a href={`https://news.ycombinator.com/from?site=${domain}`} target="_blank" rel="noopener" class="text-xs text-gray-500 hover:underline">({domain})</a>
                         {:else}
                             {story.title}
                         {/if}
