@@ -94,7 +94,7 @@
                     <a
                         href={story?.id === groupStory.id ? '/' : `/${groupStory.id}`}
                         aria-current={story?.id === groupStory.id ? 'page' : undefined}
-                        class="cursor-e-resize block active:opacity-50 sm:active:!opacity-100"
+                        class="{story?.id === groupStory.id ? 'cursor-west' : 'cursor-east'} block active:opacity-50 sm:active:!opacity-100"
                     >
                         <StoryItem story={groupStory} selected={story?.id === groupStory.id}/>
                     </a>
@@ -154,22 +154,24 @@
             {:then comments}
                 <div class="divide-y divide-gray-300">
                     {#each comments as comment}
+                        {@const selected = data.selectedIds.includes(comment.id)}
+                        {@const canSelect = comment.kids && !selected}
                         <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
                         <div
-                            role={comment.kids ? 'button' : undefined}
-                            tabindex={comment.kids ? 0 : undefined}
+                            role={canSelect ? 'button' : undefined}
+                            tabindex={canSelect ? 0 : undefined}
                             on:click={(event) => {
-                                if (comment.kids && !(event.target instanceof Element && event.target.closest('a'))) {
+                                if (canSelect && !(event.target instanceof Element && event.target.closest('a'))) {
                                     selectComment(column.path, comment.id);
                                 }
                             }}
                             on:keydown={(event) => {
-                                if (comment.kids && event.target === event.currentTarget && (event.key === 'Enter' || event.key === ' ')) {
+                                if (canSelect && event.target === event.currentTarget && (event.key === 'Enter' || event.key === ' ')) {
                                     event.preventDefault();
                                     selectComment(column.path, comment.id);
                                 }
                             }}
-                            class="p-4 border-r-2 {data.selectedIds.includes(comment.id) ? '!border-r-blue-500' : '!border-r-transparent'} {comment.kids && 'cursor-e-resize active:opacity-50 sm:active:!opacity-100'}"
+                            class="p-4 border-r-2 {selected ? '!border-r-blue-500 cursor-text select-text' : '!border-r-transparent'} {canSelect && 'cursor-east active:opacity-50 sm:active:!opacity-100'}"
                         >
                             <CommentItem {comment}/>
                         </div>
@@ -181,3 +183,13 @@
         </Column>
     {/each}
 </div>
+
+<style>
+    .cursor-east {
+        cursor: url('/resizeeast.svg') 23 16, e-resize;
+    }
+
+    .cursor-west {
+        cursor: url('/resizewest.svg') 9 16, w-resize;
+    }
+</style>
