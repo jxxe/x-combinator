@@ -91,12 +91,16 @@
                 {/if}
 
                 {#each group.stories as groupStory}
+                    {@const selected = story?.id === groupStory.id}
+                    {@const articleUrl = selected && groupStory.url ? horizontalNewsUrl(groupStory.url) : undefined}
                     <a
-                        href={story?.id === groupStory.id ? '/' : `/${groupStory.id}`}
-                        aria-current={story?.id === groupStory.id ? 'page' : undefined}
-                        class="{story?.id === groupStory.id ? 'cursor-west' : 'cursor-east'} block active:opacity-50 sm:active:!opacity-100"
+                        href={articleUrl ?? `/${groupStory.id}`}
+                        target={articleUrl ? '_blank' : undefined}
+                        rel={articleUrl ? 'noopener' : undefined}
+                        aria-current={selected ? 'page' : undefined}
+                        class="{selected ? 'cursor-pointer' : 'cursor-east'} block active:opacity-50 sm:active:!opacity-100"
                     >
-                        <StoryItem story={groupStory} selected={story?.id === groupStory.id}/>
+                        <StoryItem story={groupStory} {selected}/>
                     </a>
                 {/each}
             {/each}
@@ -187,9 +191,5 @@
 <style>
     .cursor-east {
         cursor: url('/resizeeast.svg') 23 16, e-resize;
-    }
-
-    .cursor-west {
-        cursor: url('/resizewest.svg') 9 16, w-resize;
     }
 </style>
