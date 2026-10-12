@@ -137,7 +137,7 @@
                 {#if story.url}
                     {#key story.url}
                         <iframe
-                            src={`/embed-proxy?url=${encodeURIComponent(story.url)}`}
+                            src={`/embed-proxy?url=${encodeURIComponent(story.url)}#toolbar=0&navpanes=0`}
                             frameborder="0"
                             title="Embedded article"
                             class="w-full grow [zoom:90%]"
