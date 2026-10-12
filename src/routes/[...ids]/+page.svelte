@@ -141,7 +141,6 @@
                             frameborder="0"
                             title="Embedded article"
                             class="w-full grow [zoom:90%]"
-                            sandbox=""
                         ></iframe>
                     {/key}
                 {:else if story.text}
