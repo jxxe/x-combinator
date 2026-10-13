@@ -24,6 +24,11 @@ export function rewriteHnLinks(node: HTMLElement, _html: string) {
             const rewritten = horizontalNewsUrl(href);
             if (rewritten !== href) {
                 link.setAttribute('href', rewritten);
+            }
+            if (link.hostname === 'news.ycombinator.com' ||
+                link.origin === new URL(node.baseURI).origin) {
+                link.removeAttribute('target');
+            } else {
                 link.target = '_blank';
                 link.relList.add('noopener');
             }

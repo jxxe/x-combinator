@@ -4,8 +4,37 @@ import { createServer } from 'vite';
 
 const server = await createServer({ server: { middlewareMode: true }, appType: 'custom' });
 after(() => server.close());
-const { horizontalNewsUrl } = await server.ssrLoadModule('/src/lib/hn-links.ts');
+const { horizontalNewsUrl, rewriteHnLinks } = await server.ssrLoadModule('/src/lib/hn-links.ts');
 const { load } = await server.ssrLoadModule('/src/routes/[...ids]/+page.js');
+
+test('parsed links open externally in new tabs but keep HN and local navigation in this tab', async () => {
+    const baseURI = 'https://horizontal.test/10';
+    for (const [href, expectedHref, target] of [
+        ['https://example.com/article', 'https://example.com/article', '_blank'],
+        ['https://news.ycombinator.com/item?id=123', '/123', ''],
+        ['https://news.ycombinator.com/user?id=pg', 'https://news.ycombinator.com/user?id=pg', ''],
+        ['//news.ycombinator.com/newest', '//news.ycombinator.com/newest', ''],
+        ['https://news.ycombinator.com.evil.test/item?id=123', 'https://news.ycombinator.com.evil.test/item?id=123', '_blank'],
+        ['/123', '/123', '']
+    ]) {
+        let value = href;
+        const link = {
+            target: '_blank',
+            relList: new Set(['nofollow']),
+            get hostname() { return new URL(value, baseURI).hostname; },
+            get origin() { return new URL(value, baseURI).origin; },
+            getAttribute() { return value; },
+            setAttribute(_name, next) { value = next; },
+            removeAttribute() { this.target = ''; }
+        };
+        const action = rewriteHnLinks({ baseURI, querySelectorAll: () => [link] }, '');
+        await action.update();
+        assert.equal(value, expectedHref);
+        assert.equal(link.target, target, href);
+        assert.ok(link.relList.has('nofollow'));
+        if (target === '_blank') assert.ok(link.relList.has('noopener'));
+    }
+});
 
 test('rewrites only valid HN item URLs', () => {
     assert.equal(horizontalNewsUrl('https://news.ycombinator.com/item?id=49972730'), '/49972730');
