@@ -37,6 +37,35 @@ export async function fetchFrontPage(day: string) {
     return stories;
 }
 
+type AlgoliaHit = {
+    objectID: string;
+    title: string;
+    url: string | null;
+    author: string;
+    points: number | null;
+    num_comments: number | null;
+    created_at_i: number;
+};
+
+// The Firebase API has no search, so search through Algolia's HN Search API.
+export async function searchStories(query: string, signal?: AbortSignal): Promise<Story[]> {
+    const url = `https://hn.algolia.com/api/v1/search?tags=story&query=${encodeURIComponent(query)}`;
+    const request = await fetch(url, { signal });
+    if (!request.ok) throw new Error('Unable to search stories');
+    const { hits } = await request.json() as { hits: AlgoliaHit[] };
+
+    return hits.map(hit => ({
+        id: Number(hit.objectID),
+        type: 'story',
+        title: hit.title,
+        url: hit.url || undefined,
+        by: hit.author,
+        score: hit.points ?? 0,
+        descendants: hit.num_comments ?? 0,
+        time: hit.created_at_i
+    }));
+}
+
 export function fetchComments(item: Item) {
     let request = commentRequests.get(item.id);
     if (!request) {

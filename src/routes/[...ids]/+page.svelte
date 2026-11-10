@@ -1,7 +1,7 @@
 <script lang="ts">
     import { afterNavigate, goto } from '$app/navigation';
     import { page } from '$app/stores';
-    import { fetchFrontPage } from '$lib/api';
+    import { fetchFrontPage, searchStories } from '$lib/api';
     import Column from '$lib/components/Column.svelte';
     import CommentItem from '$lib/components/CommentItem.svelte';
     import Header from '$lib/components/Header.svelte';
@@ -19,6 +19,12 @@
     let hasMoreStories = true;
     let nextStoryDay = new Date();
     let commentsContainer: HTMLElement;
+    let storiesColumn: HTMLElement | undefined;
+
+    let query = '';
+    let searchResults: Story[] | undefined;
+    let searchFailed = false;
+    let searchController: AbortController | undefined;
 
     nextStoryDay.setUTCHours(0, 0, 0, 0);
 
@@ -26,6 +32,10 @@
     $: storyTime = story && new Date(story.time * 1000);
     $: title = story?.title ?? 'Horizontal News';
     $: previewUrl = new URL($page.url.pathname, $page.url.origin).href;
+
+    $: searching = query.trim() !== '';
+    $: search(query.trim());
+    $: groups = searching ? [{ day: '', stories: searchResults ?? [] }] : storyGroups;
 
     function selectComment(path: number[], commentId: number) {
         goto('/' + [...path, commentId].join('/'), { replaceState: true, noScroll: true, keepFocus: true });
@@ -50,6 +60,24 @@
         }
     }
 
+    async function search(searchQuery: string) {
+        // Only the latest query's results should show up.
+        searchController?.abort();
+        searchFailed = false;
+        if (!searchQuery) {
+            searchResults = undefined;
+            return;
+        }
+
+        const controller = searchController = new AbortController();
+        try {
+            searchResults = await searchStories(searchQuery, controller.signal);
+            storiesColumn?.scrollTo({ top: 0 });
+        } catch {
+            if (!controller.signal.aborted) searchFailed = true;
+        }
+    }
+
     function formatDay(day: string) {
         return new Intl.DateTimeFormat(undefined, {
             dateStyle: 'long',
@@ -61,7 +89,7 @@
         const column = event.currentTarget as HTMLElement;
         const distanceFromBottom = column.scrollHeight - column.scrollTop - column.clientHeight;
 
-        if (distanceFromBottom < 400) loadMoreStories();
+        if (!searching && distanceFromBottom < 400) loadMoreStories();
     }
 
     onMount(loadMoreStories);
@@ -78,11 +106,11 @@
 </svelte:head>
 
 <div class="flex h-[100dvh] overflow-y-hidden scrollbar-none" bind:this={commentsContainer}>
-    <Column index={0} on:scroll={handleStoriesScroll}>
-        <Header/>
+    <Column index={0} bind:element={storiesColumn} on:scroll={handleStoriesScroll}>
+        <Header bind:query/>
 
         <div class="space-y-2 p-2 pb-4">
-            {#each storyGroups as group, groupIndex}
+            {#each groups as group, groupIndex}
                 {#if groupIndex > 0}
                     <div class="flex items-center gap-2 pt-4 text-xs font-medium text-gray-500">
                         <time datetime={group.day}>{formatDay(group.day)}</time>
@@ -105,7 +133,15 @@
                 {/each}
             {/each}
 
-            {#if loadingStories}
+            {#if searching}
+                {#if searchFailed}
+                    <p class="italic text-gray-500">Unable to search.</p>
+                {:else if !searchResults}
+                    <p class="italic text-gray-500">Searching...</p>
+                {:else if !searchResults.length}
+                    <p class="italic text-gray-500">No results.</p>
+                {/if}
+            {:else if loadingStories}
                 <p class="italic text-gray-500">Loading...</p>
             {/if}
         </div>
