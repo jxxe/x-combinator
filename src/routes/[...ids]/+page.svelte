@@ -4,7 +4,6 @@
     import { fetchFrontPage, searchStories } from '$lib/api';
     import Column from '$lib/components/Column.svelte';
     import CommentColumn from '$lib/components/CommentColumn.svelte';
-    import type { CommentSort } from '$lib/comment-sort';
     import Header from '$lib/components/Header.svelte';
     import StoryItem from '$lib/components/StoryItem.svelte';
     import type { Story } from '$lib/types/item';
@@ -21,7 +20,6 @@
     let nextStoryDay = new Date();
     let commentsContainer: HTMLElement;
     let storiesColumn: HTMLElement | undefined;
-    let commentSort: CommentSort = 'default';
 
     let query = '';
     let searchResults: Story[] | undefined;
@@ -105,7 +103,7 @@
 
 <div class="flex h-[100dvh] overflow-y-hidden scrollbar-none" bind:this={commentsContainer}>
     <Column index={0} bind:element={storiesColumn} on:scroll={handleStoriesScroll}>
-        <Header bind:query bind:sort={commentSort} showSort={!!story}/>
+        <Header bind:query/>
 
         <div class="space-y-2 p-2 pb-4">
             {#each groups as group, groupIndex}
@@ -185,7 +183,7 @@
     {/if}
 
     {#each data.columns as column, columnIndex (column.path.join('/'))}
-        <CommentColumn index={columnIndex + (story ? 2 : 1)} {column} selectedIds={data.selectedIds} sort={commentSort}/>
+        <CommentColumn index={columnIndex + (story ? 2 : 1)} {column} selectedIds={data.selectedIds}/>
     {/each}
 </div>
 

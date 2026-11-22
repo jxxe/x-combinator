@@ -1,7 +1,7 @@
 <script lang="ts">
     import { goto } from '$app/navigation';
     import { fetchLatestItem, refreshComments } from '$lib/api';
-    import { sortComments, type CommentSort } from '$lib/comment-sort';
+    import { SORT_LABELS, sortComments, type CommentSort } from '$lib/comment-sort';
     import type { Comment, Item } from '$lib/types/item';
     import { onMount } from 'svelte';
     import Column from './Column.svelte';
@@ -12,7 +12,7 @@
     export let index: number;
     export let column: { item: Item, path: number[], comments: Promise<Comment[]> };
     export let selectedIds: number[];
-    export let sort: CommentSort;
+    let sort: CommentSort = 'default';
 
     let element: HTMLElement | undefined;
 
@@ -73,6 +73,27 @@
     {:else if !sortedComments}
         <p class="p-4 italic text-gray-500">Loading...</p>
     {:else}
+        <!-- Zero-height sticky row, so the button floats over the comments without taking space.
+             It shows on hover (always on touch screens), and always once the column is not on the default sort. -->
+        <div class="sticky top-0 z-20 h-0 flex justify-end">
+            <!-- The invisible select covers the icon, so a click opens its native menu -->
+            <label class="relative mt-1 mr-1 h-7 flex items-center justify-center gap-1 bg-white text-gray-500 hover:text-black {sort === 'default' ? 'w-7 opacity-0 group-hover:opacity-100 focus-within:opacity-100 [@media(hover:none)]:opacity-100' : 'px-2'}">
+                {#if sort !== 'default'}
+                    <span class="text-xs leading-none">{SORT_LABELS[sort]}</span>
+                {/if}
+                <svg class="w-4 h-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M5 13V3M2 6l3-3 3 3M11 3v10M8 10l3 3 3-3"/>
+                </svg>
+                <select aria-label="Sort comments" bind:value={sort} class="absolute inset-0 opacity-0 cursor-pointer">
+                    <optgroup label="Comment sort">
+                        {#each Object.entries(SORT_LABELS) as [value, label]}
+                            <option {value}>{label}</option>
+                        {/each}
+                    </optgroup>
+                </select>
+            </label>
+        </div>
+
         {#if newCount > 0}
             <button
                 type="button"
