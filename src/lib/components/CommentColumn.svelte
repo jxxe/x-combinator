@@ -49,6 +49,7 @@
         try {
             comments = await refreshComments(item);
             knownKids = new Set(item.kids);
+            sort = 'newest';
             element?.scrollTo({ top: 0, behavior: 'smooth' });
         } catch {
             // Keep the banner so the user can try again.
