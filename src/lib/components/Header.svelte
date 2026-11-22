@@ -36,10 +36,11 @@
                     <span class="text-xs">{SORT_LABELS[sort]}</span>
                 {/if}
                 <select aria-label="Sort comments" bind:value={sort} class="absolute inset-0 opacity-0 cursor-pointer">
-                    <option disabled>Comment sort</option>
-                    {#each Object.entries(SORT_LABELS) as [value, label]}
-                        <option {value}>{label}</option>
-                    {/each}
+                    <optgroup label="Comment sort">
+                        {#each Object.entries(SORT_LABELS) as [value, label]}
+                            <option {value}>{label}</option>
+                        {/each}
+                    </optgroup>
                 </select>
             </label>
         {/if}
