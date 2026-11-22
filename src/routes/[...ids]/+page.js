@@ -41,7 +41,7 @@ export async function load({ params }) {
         selectedIds,
         // Nested promises are not awaited, so the columns stream in after navigation
         columns: path
-            .map((item, index) => ({ path: selectedIds.slice(0, index + 1), comments: fetchComments(item) }))
+            .map((item, index) => ({ item, path: selectedIds.slice(0, index + 1), comments: fetchComments(item) }))
             .filter((_, index) => path[index].kids?.length)
     };
 }

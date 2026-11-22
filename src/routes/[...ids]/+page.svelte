@@ -1,9 +1,10 @@
 <script lang="ts">
-    import { afterNavigate, goto } from '$app/navigation';
+    import { afterNavigate } from '$app/navigation';
     import { page } from '$app/stores';
     import { fetchFrontPage, searchStories } from '$lib/api';
     import Column from '$lib/components/Column.svelte';
-    import CommentItem from '$lib/components/CommentItem.svelte';
+    import CommentColumn from '$lib/components/CommentColumn.svelte';
+    import type { CommentSort } from '$lib/comment-sort';
     import Header from '$lib/components/Header.svelte';
     import StoryItem from '$lib/components/StoryItem.svelte';
     import type { Story } from '$lib/types/item';
@@ -20,6 +21,7 @@
     let nextStoryDay = new Date();
     let commentsContainer: HTMLElement;
     let storiesColumn: HTMLElement | undefined;
+    let commentSort: CommentSort = 'default';
 
     let query = '';
     let searchResults: Story[] | undefined;
@@ -36,10 +38,6 @@
     $: searching = query.trim() !== '';
     $: search(query.trim());
     $: groups = searching ? [{ day: '', stories: searchResults ?? [] }] : storyGroups;
-
-    function selectComment(path: number[], commentId: number) {
-        goto('/' + [...path, commentId].join('/'), { replaceState: true, noScroll: true, keepFocus: true });
-    }
 
     afterNavigate(() => {
         commentsContainer?.scrollTo({ left: commentsContainer.scrollWidth, top: 0, behavior: 'smooth' });
@@ -107,7 +105,7 @@
 
 <div class="flex h-[100dvh] overflow-y-hidden scrollbar-none" bind:this={commentsContainer}>
     <Column index={0} bind:element={storiesColumn} on:scroll={handleStoriesScroll}>
-        <Header bind:query/>
+        <Header bind:query bind:sort={commentSort} showSort={!!story}/>
 
         <div class="space-y-2 p-2 pb-4">
             {#each groups as group, groupIndex}
@@ -187,39 +185,7 @@
     {/if}
 
     {#each data.columns as column, columnIndex (column.path.join('/'))}
-        <Column index={columnIndex + (story ? 2 : 1)}>
-            {#await column.comments}
-                <p class="p-4 italic text-gray-500">Loading...</p>
-            {:then comments}
-                <div class="divide-y divide-gray-300">
-                    {#each comments as comment}
-                        {@const selected = data.selectedIds.includes(comment.id)}
-                        {@const canSelect = comment.kids && !selected}
-                        <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
-                        <div
-                            role={canSelect ? 'button' : undefined}
-                            tabindex={canSelect ? 0 : undefined}
-                            on:click={(event) => {
-                                if (canSelect && !(event.target instanceof Element && event.target.closest('a'))) {
-                                    selectComment(column.path, comment.id);
-                                }
-                            }}
-                            on:keydown={(event) => {
-                                if (canSelect && event.target === event.currentTarget && (event.key === 'Enter' || event.key === ' ')) {
-                                    event.preventDefault();
-                                    selectComment(column.path, comment.id);
-                                }
-                            }}
-                            class="p-4 border-r-2 {selected ? '!border-r-blue-500 cursor-text select-text' : '!border-r-transparent'} {canSelect && 'cursor-east active:opacity-50 sm:active:!opacity-100'}"
-                        >
-                            <CommentItem {comment}/>
-                        </div>
-                    {/each}
-                </div>
-            {:catch}
-                <p class="p-4 italic text-gray-500">Unable to load comments.</p>
-            {/await}
-        </Column>
+        <CommentColumn index={columnIndex + (story ? 2 : 1)} {column} selectedIds={data.selectedIds} sort={commentSort}/>
     {/each}
 </div>
 

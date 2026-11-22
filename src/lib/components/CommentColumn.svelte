@@ -1,0 +1,119 @@
+<script lang="ts">
+    import { goto } from '$app/navigation';
+    import { fetchLatestItem, refreshComments } from '$lib/api';
+    import { sortComments, type CommentSort } from '$lib/comment-sort';
+    import type { Comment, Item } from '$lib/types/item';
+    import { onMount } from 'svelte';
+    import Column from './Column.svelte';
+    import CommentItem from './CommentItem.svelte';
+
+    const POLL_INTERVAL_MS = 30_000;
+
+    export let index: number;
+    export let column: { item: Item, path: number[], comments: Promise<Comment[]> };
+    export let selectedIds: number[];
+    export let sort: CommentSort;
+
+    let element: HTMLElement | undefined;
+
+    // Load the column once. Later navigations within it pass the same cached comments again.
+    let comments: Comment[] | undefined;
+    let failed = false;
+    column.comments.then(
+        result => comments = result,
+        () => failed = true
+    );
+
+    let knownKids = new Set(column.item.kids);
+    let latestItem: Item | undefined;
+    let showingNew = false;
+
+    $: newCount = latestItem?.kids?.filter(id => !knownKids.has(id)).length ?? 0;
+    $: sortedComments = comments && sortComments(comments, sort);
+
+    async function checkForNewComments() {
+        if (document.hidden || showingNew) return;
+
+        try {
+            latestItem = await fetchLatestItem(column.item.id);
+        } catch {
+            // Try again on the next poll.
+        }
+    }
+
+    async function showNewComments() {
+        if (!latestItem || showingNew) return;
+
+        const item = latestItem;
+        showingNew = true;
+        try {
+            comments = await refreshComments(item);
+            knownKids = new Set(item.kids);
+            element?.scrollTo({ top: 0, behavior: 'smooth' });
+        } catch {
+            // Keep the banner so the user can try again.
+        } finally {
+            showingNew = false;
+        }
+    }
+
+    function selectComment(commentId: number) {
+        goto('/' + [...column.path, commentId].join('/'), { replaceState: true, noScroll: true, keepFocus: true });
+    }
+
+    onMount(() => {
+        const interval = setInterval(checkForNewComments, POLL_INTERVAL_MS);
+        return () => clearInterval(interval);
+    });
+</script>
+
+<Column {index} bind:element>
+    {#if failed}
+        <p class="p-4 italic text-gray-500">Unable to load comments.</p>
+    {:else if !sortedComments}
+        <p class="p-4 italic text-gray-500">Loading...</p>
+    {:else}
+        {#if newCount > 0}
+            <button
+                type="button"
+                on:click={showNewComments}
+                disabled={showingNew}
+                class="sticky top-0 z-10 w-full h-7 px-2 leading-none bg-blue-500 text-white disabled:opacity-75"
+            >
+                {showingNew ? 'Loading...' : `${newCount} new ${newCount === 1 ? 'comment' : 'comments'}`}
+            </button>
+        {/if}
+
+        <div class="divide-y divide-gray-300">
+            {#each sortedComments as comment (comment.id)}
+                {@const selected = selectedIds.includes(comment.id)}
+                {@const canSelect = comment.kids && !selected}
+                <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
+                <div
+                    role={canSelect ? 'button' : undefined}
+                    tabindex={canSelect ? 0 : undefined}
+                    on:click={(event) => {
+                        if (canSelect && !(event.target instanceof Element && event.target.closest('a'))) {
+                            selectComment(comment.id);
+                        }
+                    }}
+                    on:keydown={(event) => {
+                        if (canSelect && event.target === event.currentTarget && (event.key === 'Enter' || event.key === ' ')) {
+                            event.preventDefault();
+                            selectComment(comment.id);
+                        }
+                    }}
+                    class="p-4 border-r-2 {selected ? '!border-r-blue-500 cursor-text select-text' : '!border-r-transparent'} {canSelect && 'cursor-east active:opacity-50 sm:active:!opacity-100'}"
+                >
+                    <CommentItem {comment}/>
+                </div>
+            {/each}
+        </div>
+    {/if}
+</Column>
+
+<style>
+    .cursor-east {
+        cursor: url('/resizeeast.svg') 23 16, e-resize;
+    }
+</style>

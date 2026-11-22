@@ -79,3 +79,15 @@ export function fetchComments(item: Item) {
     }
     return request;
 }
+
+// Bypasses the session cache so polling sees replies posted since the item was first loaded.
+export function fetchLatestItem(itemId: number) {
+    return GET<Item>(`item/${itemId}.json`);
+}
+
+// Caches the newer item and its replies together. Already-loaded comments stay cached, so only new replies are fetched.
+export function refreshComments(item: Item) {
+    if (browser) itemRequests.set(item.id, Promise.resolve(item));
+    commentRequests.delete(item.id);
+    return fetchComments(item);
+}
