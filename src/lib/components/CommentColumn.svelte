@@ -27,6 +27,8 @@
     let knownKids = new Set(column.item.kids);
     let latestItem: Item | undefined;
     let showingNew = false;
+    // Comments loaded by the last banner click, which flash yellow when they first render.
+    let flashIds = new Set<number>();
 
     $: newCount = latestItem?.kids?.filter(id => !knownKids.has(id)).length ?? 0;
     $: sortedComments = comments && sortComments(comments, sort);
@@ -48,6 +50,7 @@
         showingNew = true;
         try {
             comments = await refreshComments(item);
+            flashIds = new Set(item.kids?.filter(id => !knownKids.has(id)));
             knownKids = new Set(item.kids);
             sort = 'newest';
             element?.scrollTo({ top: 0, behavior: 'smooth' });
@@ -125,6 +128,7 @@
                             selectComment(comment.id);
                         }
                     }}
+                    class:yellow-fade={flashIds.has(comment.id)}
                     class="p-4 border-r-2 {selected ? '!border-r-blue-500 cursor-text select-text' : '!border-r-transparent'} {canSelect && 'cursor-east active:opacity-50 sm:active:!opacity-100'}"
                 >
                     <CommentItem {comment}/>
@@ -135,6 +139,16 @@
 </Column>
 
 <style>
+    /* The Yellow Fade Technique: https://signalvnoise.com/archives/000558 */
+    .yellow-fade {
+        animation: yellow-fade 2.5s ease-out;
+    }
+
+    @keyframes yellow-fade {
+        0%, 20% { background-color: #fffbd1; }
+        100% { background-color: transparent; }
+    }
+
     .cursor-east {
         cursor: url('/resizeeast.svg') 23 16, e-resize;
     }
