@@ -81,7 +81,8 @@
              It shows on hover (always on touch screens), and always once the column is not on the default sort. -->
         <div class="sticky top-0 z-20 h-0 flex justify-end">
             <!-- The invisible select covers the icon, so a click opens its native menu -->
-            <label class="relative mt-1 mr-1 h-7 flex items-center justify-center gap-1 bg-white text-gray-500 hover:text-black {sort === 'default' ? 'w-7 opacity-0 group-hover:opacity-100 focus-within:opacity-100 [@media(hover:none)]:opacity-100' : 'px-2'}">
+            <!-- Over the new comments banner, which is also h-7, sit flush in its corner instead of overhanging it -->
+            <label class="relative {newCount > 0 ? '' : 'mt-1 mr-1'} h-7 flex items-center justify-center gap-1 bg-white text-gray-500 hover:text-black {sort === 'default' ? 'w-7 opacity-0 group-hover:opacity-100 focus-within:opacity-100 [@media(hover:none)]:opacity-100' : 'px-2'}">
                 {#if sort !== 'default'}
                     <span class="text-xs leading-none">{SORT_LABELS[sort]}</span>
                 {/if}
